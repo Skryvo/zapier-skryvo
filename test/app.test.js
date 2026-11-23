@@ -12,6 +12,8 @@ const API = nock.bind(null, 'https://api.skryvo.ai');
 const P = '/api/v1/agent';
 const authData = { api_key: KEY };
 
+const sign = (body, secret, t) => `t=${t},v1=${crypto.createHmac('sha256', secret).update(`${t}.${body}`).digest('hex')}`;
+
 const example = (method, path) => {
   const op = spec.paths[`${P}${path}`][method];
   const code = Object.keys(op.responses).find((c) => c.startsWith('2'));
@@ -42,17 +44,106 @@ test('a revoked key asks the person to reconnect', async () => {
   });
 });
 
-test('Write a Post drafts without pictures and sends only what was filled in', async () => {
+const ACCEPTED = { job_id: 'job_1', status: 'running', secret: 'whsec_job', poll_url: 'https://api.skryvo.ai/api/v1/agent/jobs/job_1' };
+
+test('Write a Post starts the draft with Zapier\'s callback address and sends only what was filled in', async () => {
   let sent;
   API()
     .post(`${P}/drafts`, (body) => (sent = body))
-    .reply(200, example('post', '/drafts'));
+    .reply(202, ACCEPTED);
   const out = await appTester(App.creates.write_post.operation.perform, {
     authData,
-    inputData: { topic: 'Our new studio opens Saturday', platforms: ['linkedin'], tone: '', hashtags: [] },
+    inputData: { topic: 'Our new studio opens Saturday', platforms: ['linkedin'], tone: '', hashtags: [], pictures: 'true' },
   });
-  assert.deepEqual(sent, { topic: 'Our new studio opens Saturday', platforms: ['linkedin'], pictures: false });
-  assert.equal(out.status, 'written');
+  assert.match(sent.callback_url, /^https:\/\//);
+  delete sent.callback_url;
+  assert.deepEqual(sent, { topic: 'Our new studio opens Saturday', platforms: ['linkedin'], pictures: true });
+  assert.deepEqual(out, { job_id: 'job_1', secret: 'whsec_job' });
+});
+
+test('Design a Picture and Plan an Article start a job too', async () => {
+  let picture;
+  let plan;
+  API().post(`${P}/pictures`, (body) => (picture = body)).reply(202, ACCEPTED);
+  API().post(`${P}/articles/plan`, (body) => (plan = body)).reply(202, ACCEPTED);
+  await appTester(App.creates.design_picture.operation.perform, {
+    authData,
+    inputData: { text: 'Doors open at nine.', platforms: ['linkedin'], headline: '' },
+  });
+  await appTester(App.creates.plan_article.operation.perform, {
+    authData,
+    inputData: { topic: 'How to choose a grinder', sources: ['https://example.com'], length: '1200' },
+  });
+  assert.equal(picture.text, 'Doors open at nine.');
+  assert.ok(picture.callback_url && !('headline' in picture));
+  assert.deepEqual({ ...plan, callback_url: undefined }, { topic: 'How to choose a grinder', sources: ['https://example.com'], length: 1200, callback_url: undefined });
+});
+
+const signedCallback = (event, secret, t = Math.floor(Date.now() / 1000)) => {
+  const content = JSON.stringify(event);
+  return { headers: { 'Http-Skryvo-Signature': sign(content, secret, t) }, content };
+};
+const jobEvent = (type, data) => ({ id: 'evt_9', type, created: '2026-11-24T09:01:00Z', test: false, data });
+
+test('a signed job.done callback finishes the step with the call\'s own answer', async () => {
+  const pictures = example('post', '/pictures');
+  const out = await appTester(App.creates.design_picture.operation.performResume, {
+    authData,
+    outputData: { job_id: 'job_1', secret: 'whsec_job' },
+    rawRequest: signedCallback(jobEvent('job.done', { job_id: 'job_1', kind: 'pictures', status: 'done', answer: pictures }), 'whsec_job'),
+  });
+  assert.equal(out.job_id, 'job_1');
+  assert.deepEqual(out.pictures, pictures.pictures);
+});
+
+test('a failed job fails the step and says nothing was charged', async () => {
+  const failed = (detail) =>
+    jobEvent('job.failed', { job_id: 'job_1', kind: 'drafts', status: 'failed', answer: null, error: { status: 422, detail } });
+  await assert.rejects(
+    appTester(App.creates.write_post.operation.performResume, {
+      authData,
+      outputData: { job_id: 'job_1', secret: 'whsec_job' },
+      rawRequest: signedCallback(failed('This brand has no kept look yet.'), 'whsec_job'),
+    }),
+    /This brand has no kept look yet\. Nothing was charged\./,
+  );
+  await assert.rejects(
+    appTester(App.creates.write_post.operation.performResume, {
+      authData,
+      outputData: { job_id: 'job_1', secret: 'whsec_job' },
+      rawRequest: signedCallback(failed('The work stopped before it finished, and nothing was charged.'), 'whsec_job'),
+    }),
+    (error) => /nothing was charged\.$/.test(JSON.parse(error.message).message) && !/Nothing was charged/.test(error.message),
+  );
+});
+
+test('an unsigned, forged or other job\'s callback is not used', async () => {
+  const done = jobEvent('job.done', { job_id: 'job_1', kind: 'pictures', status: 'done', answer: {} });
+  for (const [rawRequest, reason] of [
+    [{ headers: {}, content: JSON.stringify(done) }, /not signed by Skryvo/],
+    [signedCallback(done, 'whsec_other'), /not signed by Skryvo/],
+    [signedCallback({ ...done, data: { ...done.data, job_id: 'job_2' } }, 'whsec_job'), /another job/],
+  ]) {
+    await assert.rejects(
+      appTester(App.creates.design_picture.operation.performResume, {
+        authData,
+        outputData: { job_id: 'job_1', secret: 'whsec_job' },
+        rawRequest,
+      }),
+      reason,
+    );
+  }
+});
+
+test('Write an Article starts the writing from a plan with the answers given', async () => {
+  let sent;
+  API().post(`${P}/articles`, (body) => (sent = body)).reply(202, example('post', '/articles'));
+  const out = await appTester(App.creates.write_article.operation.perform, {
+    authData,
+    inputData: { plan: 'pl_91ab3e', answers: [{ question: 'Which grinder?', answer: 'A burr grinder.' }, { question: '', answer: '' }] },
+  });
+  assert.deepEqual(sent, { plan_id: 'pl_91ab3e', answers: [{ question: 'Which grinder?', answer: 'A burr grinder.' }] });
+  assert.equal(out.status, 'writing');
 });
 
 test("a refusal fails the step with Skryvo's own sentence", async () => {
@@ -158,7 +249,6 @@ test('turning a Zap on subscribes its URL to one event, and off unsubscribes', a
 });
 
 const BODY = JSON.stringify({ id: 'evt_1', type: 'post.published', created: '2026-11-24T09:00:41+00:00', test: false, data: { id: 'p1' } });
-const sign = (body, secret, t) => `t=${t},v1=${crypto.createHmac('sha256', secret).update(`${t}.${body}`).digest('hex')}`;
 
 test('a signed delivery becomes one Zap run with the event', async () => {
   const t = Math.floor(Date.now() / 1000);

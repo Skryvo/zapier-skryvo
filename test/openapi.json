@@ -776,6 +776,22 @@
               }
             }
           },
+          "202": {
+            "description": "Accepted: the answer is posted to `callback_url`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                },
+                "example": {
+                  "job_id": "job_5e4d3c2b1a09f8e7d6c5b4a3",
+                  "status": "running",
+                  "secret": "whsec_Q2x…",
+                  "poll_url": "https://api.skryvo.ai/api/v1/agent/jobs/job_5e4d3c2b1a09f8e7d6c5b4a3"
+                }
+              }
+            }
+          },
           "401": {
             "description": "The key or token is missing, revoked or expired.",
             "content": {
@@ -838,7 +854,7 @@
             }
           }
         },
-        "description": "Writes a post about `topic` for up to four platforms in the brand's own voice. Pass only what the person said. When platforms or pictures were left out, the call writes nothing and returns `status: confirm` with every setting, where it came from (`you`, `brand`, `brand profile`, `Skryvo default`), the cost and what is left; call again with the person's final values and `confirmed: true`. One generation for the whole batch, plus picture credits when pictures are on. Nothing is scheduled."
+        "description": "Writes a post about `topic` for up to four platforms in the brand's own voice. Pass only what the person said. When platforms or pictures were left out, the call writes nothing and returns `status: confirm` with every setting, where it came from (`you`, `brand`, `brand profile`, `Skryvo default`), the cost and what is left; call again with the person's final values and `confirmed: true`. One generation for the whole batch, plus picture credits when pictures are on. Nothing is scheduled.\n\nWith `callback_url` the call answers 202 at once with a job; the work runs as it would have, charged and refunded the same way, and its answer (or refusal) is posted to `callback_url` as `job.done` or `job.failed`, signed with the job's `secret` like a webhook and retried the same way. `GET /jobs/{job_id}` reads it meanwhile."
       }
     },
     "/api/v1/agent/pictures": {
@@ -891,6 +907,22 @@
               }
             }
           },
+          "202": {
+            "description": "Accepted: the answer is posted to `callback_url`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                },
+                "example": {
+                  "job_id": "job_5e4d3c2b1a09f8e7d6c5b4a3",
+                  "status": "running",
+                  "secret": "whsec_Q2x…",
+                  "poll_url": "https://api.skryvo.ai/api/v1/agent/jobs/job_5e4d3c2b1a09f8e7d6c5b4a3"
+                }
+              }
+            }
+          },
           "401": {
             "description": "The key or token is missing, revoked or expired.",
             "content": {
@@ -953,7 +985,7 @@
             }
           }
         },
-        "description": "Designs one picture for a post in the brand's kept look (its colours, type, logo and own photos), with a copy sized for each platform. The post's opening line is set on the picture unless `headline` (up to nine words) is given. `direction` carries the person's own words, such as warmer or calmer; `photo_id` picks one of the brand's photos. Takes about a minute and spends one picture's credits for each page shape the platforms need. The brand must have kept a look first. Nothing is scheduled."
+        "description": "Designs one picture for a post in the brand's kept look (its colours, type, logo and own photos), with a copy sized for each platform. The post's opening line is set on the picture unless `headline` (up to nine words) is given. `direction` carries the person's own words, such as warmer or calmer; `photo_id` picks one of the brand's photos. Takes about a minute and spends one picture's credits for each page shape the platforms need. The brand must have kept a look first. Nothing is scheduled.\n\nWith `callback_url` the call answers 202 at once with a job; the work runs as it would have, charged and refunded the same way, and its answer (or refusal) is posted to `callback_url` as `job.done` or `job.failed`, signed with the job's `secret` like a webhook and retried the same way. `GET /jobs/{job_id}` reads it meanwhile."
       }
     },
     "/api/v1/agent/results": {
@@ -2707,6 +2739,22 @@
               }
             }
           },
+          "202": {
+            "description": "Accepted: the answer is posted to `callback_url`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                },
+                "example": {
+                  "job_id": "job_5e4d3c2b1a09f8e7d6c5b4a3",
+                  "status": "running",
+                  "secret": "whsec_Q2x…",
+                  "poll_url": "https://api.skryvo.ai/api/v1/agent/jobs/job_5e4d3c2b1a09f8e7d6c5b4a3"
+                }
+              }
+            }
+          },
           "401": {
             "description": "The key or token is missing, revoked or expired.",
             "content": {
@@ -2769,7 +2817,123 @@
             }
           }
         },
-        "description": "Researches and plans a blog article about `topic` in the brand's voice: headline and alternatives, the search phrase it aims at, the outline, sources and the facts found in them, up to three questions only the author can answer, the brand's articles it would clash with, and the picture plan. Free; uses one of the month's article plans and takes about a minute. Returns `status: confirm` with every setting, where it came from and what writing it will cost. Show the plan and ask its questions before writing."
+        "description": "Researches and plans a blog article about `topic` in the brand's voice: headline and alternatives, the search phrase it aims at, the outline, sources and the facts found in them, up to three questions only the author can answer, the brand's articles it would clash with, and the picture plan. Free; uses one of the month's article plans and takes about a minute. Returns `status: confirm` with every setting, where it came from and what writing it will cost. Show the plan and ask its questions before writing.\n\nWith `callback_url` the call answers 202 at once with a job; the work runs as it would have, charged and refunded the same way, and its answer (or refusal) is posted to `callback_url` as `job.done` or `job.failed`, signed with the job's `secret` like a webhook and retried the same way. `GET /jobs/{job_id}` reads it meanwhile."
+      }
+    },
+    "/api/v1/agent/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Read a job",
+        "operationId": "job_status",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Read a job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                },
+                "example": {
+                  "job_id": "job_5e4d3c2b1a09f8e7d6c5b4a3",
+                  "kind": "pictures",
+                  "status": "done",
+                  "answer": {
+                    "brand_id": "bv_3c9d0e",
+                    "headline": "Our new studio opens Saturday",
+                    "pictures": [
+                      {
+                        "platform": "linkedin",
+                        "image_url": "https://media.skryvo.ai/images/u1/p-1200.jpg",
+                        "width": 1200,
+                        "height": 1200
+                      }
+                    ],
+                    "credits_used": 4,
+                    "credits_left": 176
+                  },
+                  "error": null,
+                  "started_at": "2026-11-24T09:00:00+00:00",
+                  "finished_at": "2026-11-24T09:01:12+00:00"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The key or token is missing, revoked or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "detail": "Send a live Skryvo API key as 'Authorization: Bearer sk_skryvo_…'."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The person's role in this team workspace does not allow the call.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "detail": "Only an admin or the owner can change a brand's look."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Refused with a reason to show the person, or a field failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ValidationFailed"
+                    }
+                  ]
+                },
+                "example": {
+                  "detail": "That time has passed. Pick a time in the future."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Sent more than 60 requests a minute or 1000 an hour with one key or token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimited"
+                },
+                "example": {
+                  "error": "rate_limit_exceeded",
+                  "message": "Too many requests. Try again in 20 seconds.",
+                  "retry_after": 20
+                }
+              }
+            }
+          }
+        },
+        "description": "Where a call made with `callback_url` is: `running`, `done` with the route's own answer, or `failed` with the status and sentence the route would have answered. A job whose process is lost ends failed within about 15 minutes and is not charged."
       }
     },
     "/api/v1/agent/articles": {
@@ -4436,7 +4600,7 @@
             }
           }
         },
-        "description": "Registers an https endpoint on the public internet for one or more events: post.published, post.failed, article.ready, article.failed, results.ready. Returns the endpoint with its signing `secret`, shown this once; store it to verify deliveries. Plans keep up to 1 (free), 3 (hobby), 10 (pro), 25 (enterprise) endpoints a workspace. Each delivery is a POST with `Skryvo-Event`, `Skryvo-Delivery` and `Skryvo-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256>`, where the HMAC is keyed by the whole secret (`whsec_…`) over `<t>.<raw body>`. Compare in constant time and refuse a `t` more than five minutes old. Answer 2xx within 10 seconds; anything else is retried after 5 minutes, 30 minutes, 2, 6 and 12 hours, and an endpoint is paused after 15 failed tries in a row."
+        "description": "Registers an https endpoint on the public internet for one or more events: post.published, post.failed, article.ready, article.failed, results.ready. Returns the endpoint with its signing `secret`, shown this once; store it to verify deliveries. A workspace keeps up to 3 on Hobby, 10 on Pro, 25 on Enterprise. An account that can only read, before a trial or after a plan ends, adds none. Each delivery is a POST with `Skryvo-Event`, `Skryvo-Delivery` and `Skryvo-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256>`, where the HMAC is keyed by the whole secret (`whsec_…`) over `<t>.<raw body>`. Compare in constant time and refuse a `t` more than five minutes old. Answer 2xx within 10 seconds; anything else is retried after 5 minutes, 30 minutes, 2, 6 and 12 hours, and an endpoint is paused after 15 failed tries in a row."
       }
     },
     "/api/v1/agent/webhooks/{webhook_id}": {
@@ -5266,6 +5430,19 @@
               }
             ],
             "title": "Photo Id"
+          },
+          "callback_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callback Url",
+            "description": "An https address on the public internet: the call answers 202 with a job at once, and its answer is posted there, signed, when it is ready"
           }
         },
         "type": "object",
@@ -5437,6 +5614,19 @@
               }
             ],
             "title": "Sources"
+          },
+          "callback_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callback Url",
+            "description": "An https address on the public internet: the call answers 202 with a job at once, and its answer is posted there, signed, when it is ready"
           }
         },
         "type": "object",
@@ -6405,6 +6595,19 @@
             "title": "Confirmed",
             "description": "The person approved the summary of what was assumed",
             "default": false
+          },
+          "callback_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Callback Url",
+            "description": "An https address on the public internet: the call answers 202 with a job at once, and its answer is posted there, signed, when it is ready"
           }
         },
         "type": "object",
@@ -7715,6 +7918,37 @@
           "from"
         ],
         "title": "Setting",
+        "type": "object"
+      },
+      "JobAccepted": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "running",
+            "title": "Status",
+            "type": "string"
+          },
+          "secret": {
+            "description": "Shown this once; signs the callback",
+            "title": "Secret",
+            "type": "string"
+          },
+          "poll_url": {
+            "title": "Poll Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "secret",
+          "poll_url"
+        ],
+        "title": "JobAccepted",
         "type": "object"
       },
       "Pictures": {
@@ -9725,6 +9959,117 @@
         "title": "ArticlePlan",
         "type": "object"
       },
+      "JobError": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "description": "The HTTP status the call would have answered",
+            "title": "Status",
+            "type": "integer"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "detail"
+        ],
+        "title": "JobError",
+        "type": "object"
+      },
+      "Job": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "drafts",
+              "pictures",
+              "article_plan"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "done",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostsToConfirm"
+              },
+              {
+                "$ref": "#/components/schemas/PostsWritten"
+              },
+              {
+                "$ref": "#/components/schemas/Pictures"
+              },
+              {
+                "$ref": "#/components/schemas/ArticlePlan"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The route's own answer, once done",
+            "title": "Answer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobError"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finished At"
+          }
+        },
+        "required": [
+          "job_id",
+          "kind",
+          "status"
+        ],
+        "title": "Job",
+        "type": "object"
+      },
       "ArticleDone": {
         "additionalProperties": false,
         "properties": {
@@ -11597,6 +11942,76 @@
         ],
         "title": "ResultsReadyEvent",
         "type": "object"
+      },
+      "JobDoneEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The event's id, the same on every endpoint and retry",
+            "title": "Id",
+            "type": "string"
+          },
+          "created": {
+            "title": "Created",
+            "type": "string"
+          },
+          "test": {
+            "title": "Test",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "job.done",
+            "title": "Type",
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "test",
+          "type",
+          "data"
+        ],
+        "title": "JobDoneEvent",
+        "type": "object"
+      },
+      "JobFailedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "The event's id, the same on every endpoint and retry",
+            "title": "Id",
+            "type": "string"
+          },
+          "created": {
+            "title": "Created",
+            "type": "string"
+          },
+          "test": {
+            "title": "Test",
+            "type": "boolean"
+          },
+          "type": {
+            "const": "job.failed",
+            "title": "Type",
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Job"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "test",
+          "type",
+          "data"
+        ],
+        "title": "JobFailedEvent",
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -11999,6 +12414,154 @@
                   "engagements": 66,
                   "clicks": 14,
                   "collected_at": "2026-11-25T09:00:00+00:00"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Received; any other answer is retried."
+          }
+        }
+      }
+    },
+    "job.done": {
+      "post": {
+        "summary": "A long call finished",
+        "description": "Posted to a call's own `callback_url`, never to a webhook. `data` is the job, with the route's answer.\n\nEach delivery is a POST with `Skryvo-Event`, `Skryvo-Delivery` and `Skryvo-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256>`, where the HMAC is keyed by the whole secret (`whsec_…`) over `<t>.<raw body>`. Compare in constant time and refuse a `t` more than five minutes old. Answer 2xx within 10 seconds; anything else is retried after 5 minutes, 30 minutes, 2, 6 and 12 hours, and an endpoint is paused after 15 failed tries in a row.",
+        "operationId": "on_job_done",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "Skryvo-Event",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Skryvo-Delivery",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Skryvo-Signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobDoneEvent"
+              },
+              "example": {
+                "id": "evt_6f1d0c9e8b7a6f5e4d3c2b1a",
+                "type": "job.done",
+                "created": "2026-11-24T09:00:03+00:00",
+                "test": false,
+                "data": {
+                  "job_id": "job_5e4d3c2b1a09f8e7d6c5b4a3",
+                  "kind": "pictures",
+                  "status": "done",
+                  "answer": {
+                    "brand_id": "bv_3c9d0e",
+                    "headline": "Our new studio opens Saturday",
+                    "pictures": [
+                      {
+                        "platform": "linkedin",
+                        "image_url": "https://media.skryvo.ai/images/u1/p-1200.jpg",
+                        "width": 1200,
+                        "height": 1200
+                      }
+                    ],
+                    "credits_used": 4,
+                    "credits_left": 176
+                  },
+                  "error": null,
+                  "started_at": "2026-11-24T09:00:00+00:00",
+                  "finished_at": "2026-11-24T09:01:12+00:00"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Received; any other answer is retried."
+          }
+        }
+      }
+    },
+    "job.failed": {
+      "post": {
+        "summary": "A long call could not finish",
+        "description": "Posted to a call's own `callback_url`, never to a webhook. `data` is the job, with the refusal; nothing was charged.\n\nEach delivery is a POST with `Skryvo-Event`, `Skryvo-Delivery` and `Skryvo-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256>`, where the HMAC is keyed by the whole secret (`whsec_…`) over `<t>.<raw body>`. Compare in constant time and refuse a `t` more than five minutes old. Answer 2xx within 10 seconds; anything else is retried after 5 minutes, 30 minutes, 2, 6 and 12 hours, and an endpoint is paused after 15 failed tries in a row.",
+        "operationId": "on_job_failed",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "Skryvo-Event",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Skryvo-Delivery",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Skryvo-Signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobFailedEvent"
+              },
+              "example": {
+                "id": "evt_6f1d0c9e8b7a6f5e4d3c2b1a",
+                "type": "job.failed",
+                "created": "2026-11-24T09:00:03+00:00",
+                "test": false,
+                "data": {
+                  "job_id": "job_5e4d3c2b1a09f8e7d6c5b4a3",
+                  "kind": "pictures",
+                  "status": "failed",
+                  "answer": null,
+                  "error": {
+                    "status": 422,
+                    "detail": "This brand has no kept look yet."
+                  },
+                  "started_at": "2026-11-24T09:00:00+00:00",
+                  "finished_at": "2026-11-24T09:01:12+00:00"
                 }
               }
             }

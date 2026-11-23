@@ -6,6 +6,9 @@ const writePost = require('./creates/write_post');
 const schedulePost = require('./creates/schedule_post');
 const publishArticle = require('./creates/publish_article');
 const writeEmail = require('./creates/write_email');
+const designPicture = require('./creates/design_picture');
+const planArticle = require('./creates/plan_article');
+const writeArticle = require('./creates/write_article');
 const findContent = require('./searches/find_content');
 const findChannel = require('./searches/find_channel');
 
@@ -19,6 +22,6 @@ module.exports = {
   beforeRequest: [addKey],
   afterResponse: [explain],
   triggers: byKey([...triggers, ...lists]),
-  creates: byKey([writePost, schedulePost, publishArticle, writeEmail]),
+  creates: byKey([writePost, designPicture, schedulePost, planArticle, writeArticle, publishArticle, writeEmail]),
   searches: byKey([findContent, findChannel]),
 };

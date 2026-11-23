@@ -49,8 +49,11 @@ the person approved. Any scheduled post can be cancelled in Skryvo before it goe
 | Trigger | Article Ready | An article written through the API finished: title, words, score, link |
 | Trigger | Article Failed | An article could not be finished (never charged) |
 | Trigger | Results Ready | A published post's reach, engagements and clicks at 1 hour, 1 day, 7, 30, 60 or 90 days |
-| Action | Write a Post | Drafts a post per platform (up to four) in the brand's voice, without pictures; one generation |
+| Action | Write a Post | Drafts a post per platform (up to four) in the brand's voice, with a picture each if asked; one generation |
+| Action | Design a Picture | One picture in the brand's kept look, sized for each platform; image credits |
 | Action | Schedule a Post | Schedules approved text, with an optional picture and link, to connected channels |
+| Action | Plan an Article | A free plan: headline, outline, search phrase and the questions only the person can answer |
+| Action | Write an Article | Starts writing a plan (two generations); Article Ready brings the finished article |
 | Action | Publish an Article | Sends a finished article to a connected blog as a draft, or schedules it |
 | Action | Write an Email | Subject lines, preheader, body and call to action; nothing is sent |
 | Search | Find Content | Earlier articles, posts, emails, listings or ads, by kind and title |
@@ -61,9 +64,11 @@ removes it. Each delivery is checked against its `Skryvo-Signature` header with 
 that does not match, or is over five minutes old, starts nothing. Samples come from your account's recent posts,
 articles and results.
 
-Zapier allows each step 30 seconds. Writing posts with pictures, designing a picture and planning an article take
-Skryvo about a minute, so they are not offered here yet; do them in Skryvo or from an AI agent, and use Article
-Ready to continue a Zap when an article is done.
+Zapier allows a step 30 seconds, and writing posts, designing a picture and planning an article can take Skryvo
+about a minute. Those three steps hand Skryvo the address Zapier gives a step that finishes later: the task shows as
+waiting, and when Skryvo posts the finished job there, signed with that job's own secret, the step completes with
+Skryvo's normal answer. A callback that isn't signed for that job is not used. A job that fails fails the step with
+Skryvo's reason and says nothing was charged.
 
 ## Errors
 
