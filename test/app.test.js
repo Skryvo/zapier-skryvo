@@ -207,7 +207,7 @@ test('every request the app makes is a route in the published spec', () => {
     [...text.matchAll(/url\(\s*[`'](\/[^`']*)[`']/g)].map((m) => m[1].replace(/\$\{[^}]*\)\}|\$\{[^}]*\}/g, '{}')),
   );
   for (const path of used) {
-    assert.ok(routes.has(path) || path.startsWith('/webhooks'), `${path} is not in the spec`);
+    assert.ok(routes.has(path), `${path} is not in the spec`);
   }
   assert.ok(used.length >= 10);
 });
